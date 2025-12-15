@@ -110,13 +110,18 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
       
+      - name: Rename files for clarity
+        run: |
+          mv AntigravityCleaner-macOS/AntigravityCleaner AntigravityCleaner-macOS/AntigravityCleaner-macOS
+          mv AntigravityCleaner-Linux/AntigravityCleaner AntigravityCleaner-Linux/AntigravityCleaner-Linux
+      
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             AntigravityCleaner-Windows/AntigravityCleaner.exe
-            AntigravityCleaner-macOS/AntigravityCleaner
-            AntigravityCleaner-Linux/AntigravityCleaner
+            AntigravityCleaner-macOS/AntigravityCleaner-macOS
+            AntigravityCleaner-Linux/AntigravityCleaner-Linux
           draft: false
           prerelease: false
         env:
