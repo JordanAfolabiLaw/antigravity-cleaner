@@ -164,12 +164,25 @@ class BrowserHelper:
             if os.path.exists(default_path):
                 profiles.append(('Default', default_path))
             
-            # Check for Profile 1, Profile 2, etc.
-            for i in range(1, 20):  # Check up to Profile 19
-                profile_name = f'Profile {i}'
-                profile_path = os.path.join(data_path, profile_name)
-                if os.path.exists(profile_path):
-                    profiles.append((profile_name, profile_path))
+            # Scan ALL Profile folders (not just 1-19)
+            # This handles users with 50+ profiles
+            for item in os.listdir(data_path):
+                item_path = os.path.join(data_path, item)
+                # Check if it's a Profile folder (Profile 1, Profile 2, etc.)
+                if os.path.isdir(item_path) and item.startswith('Profile '):
+                    profiles.append((item, item_path))
+            
+            # Sort profiles by number
+            def get_profile_num(profile_tuple):
+                name = profile_tuple[0]
+                if name == 'Default':
+                    return 0
+                try:
+                    return int(name.replace('Profile ', ''))
+                except:
+                    return 999
+            
+            profiles.sort(key=get_profile_num)
         
         self.logger.debug(f"Found {len(profiles)} profiles for {browser}: {[p[0] for p in profiles]}")
         return profiles
