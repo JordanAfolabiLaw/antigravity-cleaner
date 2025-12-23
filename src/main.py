@@ -479,6 +479,16 @@ def session_manager_menu(session_manager, browser_helper, logger):
             console.print(f"\n[cyan]Found browsers: {', '.join(browsers)}[/cyan]")
             browser = Prompt.ask("Select browser", choices=browsers)
             
+            # Check if browser is running
+            if browser_helper.is_browser_running(browser):
+                console.print(f"\n[yellow]⚠ {browser.capitalize()} is currently running.[/yellow]")
+                console.print("[dim]Browsers lock their session data while running. To backup, the browser must be closed.[/dim]")
+                if Confirm.ask(f"Close {browser.capitalize()} now? (Recommended)", default=True):
+                    browser_helper.close_browser_gracefully(browser)
+                    # Force kill if still running
+                    if browser_helper.is_browser_running(browser):
+                        browser_helper.kill_browser_processes(browser)
+            
             # Ask if user wants to search by email
             search_by_email = Confirm.ask("Search profile by email?", default=True)
             
@@ -543,6 +553,15 @@ def session_manager_menu(session_manager, browser_helper, logger):
             browsers = browser_helper.detect_installed_browsers()
             browser = Prompt.ask("Select browser", choices=browsers, default=selected_session['browser'])
             
+            # Check if browser is running
+            if browser_helper.is_browser_running(browser):
+                console.print(f"\n[yellow]⚠ {browser.capitalize()} is currently running.[/yellow]")
+                console.print("[dim]Browsers lock their session data while running. To restore, the browser must be closed.[/dim]")
+                if Confirm.ask(f"Close {browser.capitalize()} now? (Recommended)", default=True):
+                    browser_helper.close_browser_gracefully(browser)
+                    if browser_helper.is_browser_running(browser):
+                        browser_helper.kill_browser_processes(browser)
+
             # Ask if user wants to search by email
             search_by_email = Confirm.ask("Search profile by email?", default=True)
             
@@ -666,6 +685,15 @@ def session_manager_menu(session_manager, browser_helper, logger):
                     else:
                         session_name = None
                 
+                # Check if browser is running
+                target_browser = selected_profile['browser']
+                if browser_helper.is_browser_running(target_browser):
+                    console.print(f"\n[yellow]⚠ {target_browser.capitalize()} is currently running.[/yellow]")
+                    if Confirm.ask(f"Close {target_browser.capitalize()} now to allow backup?", default=True):
+                        browser_helper.close_browser_gracefully(target_browser)
+                        if browser_helper.is_browser_running(target_browser):
+                            browser_helper.kill_browser_processes(target_browser)
+
                 if session_manager.backup_session(selected_profile['browser'], selected_profile['path'], session_name):
                     console.print("[green]✓ Session backed up successfully![/green]")
                 else:

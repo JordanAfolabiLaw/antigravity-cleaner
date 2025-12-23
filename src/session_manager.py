@@ -117,8 +117,16 @@ class SessionManager:
         self.logger.debug("Encrypting session data...")
         
         try:
+            # Handle binary data (bytes) for JSON serialization
+            import base64
+            
+            def json_serial(obj):
+                if isinstance(obj, bytes):
+                    return base64.b64encode(obj).decode('utf-8')
+                raise TypeError(f"Type {type(obj)} not serializable")
+                
             # Convert dict to JSON
-            json_data = json.dumps(data).encode('utf-8')
+            json_data = json.dumps(data, default=json_serial).encode('utf-8')
             
             # Generate salt and nonce
             salt = get_random_bytes(self.SALT_SIZE)
@@ -170,6 +178,16 @@ class SessionManager:
             # Parse JSON
             data = json.loads(json_data.decode('utf-8'))
             
+            # Convert base64 fields back to bytes if they were encrypted_value
+            import base64
+            if 'cookies' in data:
+                for cookie in data['cookies']:
+                    if 'encrypted_value' in cookie and isinstance(cookie['encrypted_value'], str):
+                        try:
+                            cookie['encrypted_value'] = base64.b64decode(cookie['encrypted_value'])
+                        except:
+                            pass
+            
             self.logger.debug(f"Decrypted {len(encrypted)} bytes to {len(json_data)} bytes")
             return data
             
@@ -205,38 +223,64 @@ class SessionManager:
             self.logger.error(f"Cookie database not found: {cookie_db}")
             return False
         
+        temp_db = os.path.join(self.storage_dir, f'temp_cookies_{datetime.now().strftime("%H%M%S")}.sqlite')
+        
         try:
+            # Try to copy file first to avoid locks
+            try:
+                shutil.copy2(cookie_db, temp_db)
+            except PermissionError:
+                self.logger.error(f"Could not access {browser} cookies. Please close the browser and try again.")
+                return False
+            except Exception as e:
+                self.logger.error(f"Failed to copy cookie database: {e}")
+                return False
+
             # Read cookies from database
-            conn = sqlite3.connect(cookie_db)
+            conn = sqlite3.connect(temp_db)
             cursor = conn.cursor()
             
-            # Get all cookies (we'll store everything, filter on restore if needed)
-            cursor.execute("SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly FROM cookies")
-            cookies = cursor.fetchall()
+            # Check for encrypted_value column (Chromium 80+)
+            cursor.execute("PRAGMA table_info(cookies)")
+            columns = [c[1] for c in cursor.fetchall()]
+            has_encrypted = 'encrypted_value' in columns
+            
+            query = "SELECT host_key, name, value, path, expires_utc, is_secure, is_httponly"
+            if has_encrypted:
+                query += ", encrypted_value"
+            query += " FROM cookies"
+            
+            cursor.execute(query)
+            rows = cursor.fetchall()
             conn.close()
             
-            if not cookies:
+            if not rows:
                 self.logger.warning("No cookies found in database")
                 return False
             
             # Create session data
+            cookies_list = []
+            for r in rows:
+                cookie = {
+                    'host_key': r[0],
+                    'name': r[1],
+                    'value': r[2],
+                    'path': r[3],
+                    'expires_utc': r[4],
+                    'is_secure': r[5],
+                    'is_httponly': r[6]
+                }
+                if has_encrypted:
+                    cookie['encrypted_value'] = r[7]
+                cookies_list.append(cookie)
+
             session_data = {
                 'browser': browser,
                 'profile_path': profile_path,
                 'backup_time': datetime.now().isoformat(),
-                'cookie_count': len(cookies),
-                'cookies': [
-                    {
-                        'host_key': c[0],
-                        'name': c[1],
-                        'value': c[2],
-                        'path': c[3],
-                        'expires_utc': c[4],
-                        'is_secure': c[5],
-                        'is_httponly': c[6]
-                    }
-                    for c in cookies
-                ]
+                'cookie_count': len(cookies_list),
+                'has_encrypted': has_encrypted,
+                'cookies': cookies_list
             }
             
             # Generate session name if not provided
@@ -245,7 +289,7 @@ class SessionManager:
             
             # Encrypt and save
             if self.dry_run:
-                self.logger.info(f"[DRY RUN] Would backup {len(cookies)} cookies as '{session_name}'")
+                self.logger.info(f"[DRY RUN] Would backup {len(cookies_list)} cookies as '{session_name}'")
                 return True
             
             encrypted = self.encrypt_session(session_data)
@@ -258,12 +302,18 @@ class SessionManager:
             if os.name != 'nt':
                 os.chmod(session_file, 0o600)
             
-            self.logger.info(f"[OK] Backed up {len(cookies)} cookies to '{session_name}'")
+            self.logger.info(f"[OK] Backed up {len(cookies_list)} cookies to '{session_name}'")
             return True
             
         except Exception as e:
             self.logger.error(f"Session backup failed: {e}")
             return False
+        finally:
+            if os.path.exists(temp_db):
+                try:
+                    os.remove(temp_db)
+                except:
+                    pass
     
     def restore_session(self, session_name: str, browser: str, profile_path: str) -> bool:
         """
@@ -322,27 +372,49 @@ class SessionManager:
             conn = sqlite3.connect(cookie_db)
             cursor = conn.cursor()
             
+            # Check for encrypted_value column
+            cursor.execute("PRAGMA table_info(cookies)")
+            columns = [c[1] for c in cursor.fetchall()]
+            has_encrypted_col = 'encrypted_value' in columns
+            
             restored_count = 0
             for cookie in session_data['cookies']:
                 try:
                     # Check if cookie already exists
                     cursor.execute(
-                        "SELECT COUNT(*) FROM cookies WHERE host_key=? AND name=?",
-                        (cookie['host_key'], cookie['name'])
+                        "SELECT COUNT(*) FROM cookies WHERE host_key=? AND name=? AND path=?",
+                        (cookie['host_key'], cookie['name'], cookie.get('path', '/'))
                     )
                     exists = cursor.fetchone()[0] > 0
                     
                     if exists:
                         # Update existing cookie
-                        cursor.execute(
-                            "UPDATE cookies SET value=?, path=?, expires_utc=?, is_secure=?, is_httponly=? WHERE host_key=? AND name=?",
-                            (cookie['value'], cookie['path'], cookie['expires_utc'], cookie['is_secure'], cookie['is_httponly'], cookie['host_key'], cookie['name'])
-                        )
+                        update_query = "UPDATE cookies SET value=?, expires_utc=?, is_secure=?, is_httponly=?"
+                        params = [cookie['value'], cookie['expires_utc'], cookie['is_secure'], cookie['is_httponly']]
+                        
+                        if has_encrypted_col and 'encrypted_value' in cookie:
+                            update_query += ", encrypted_value=?"
+                            params.append(cookie['encrypted_value'])
+                            
+                        update_query += " WHERE host_key=? AND name=? AND path=?"
+                        params.extend([cookie['host_key'], cookie['name'], cookie.get('path', '/')])
+                        
+                        cursor.execute(update_query, tuple(params))
                     else:
                         # Insert new cookie
+                        insert_cols = "host_key, name, value, path, expires_utc, is_secure, is_httponly"
+                        placeholders = "?, ?, ?, ?, ?, ?, ?"
+                        params = [cookie['host_key'], cookie['name'], cookie['value'], cookie['path'], 
+                                  cookie['expires_utc'], cookie['is_secure'], cookie['is_httponly']]
+                        
+                        if has_encrypted_col and 'encrypted_value' in cookie:
+                            insert_cols += ", encrypted_value"
+                            placeholders += ", ?"
+                            params.append(cookie['encrypted_value'])
+                            
                         cursor.execute(
-                            "INSERT INTO cookies (host_key, name, value, path, expires_utc, is_secure, is_httponly) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (cookie['host_key'], cookie['name'], cookie['value'], cookie['path'], cookie['expires_utc'], cookie['is_secure'], cookie['is_httponly'])
+                            f"INSERT INTO cookies ({insert_cols}) VALUES ({placeholders})",
+                            tuple(params)
                         )
                     
                     restored_count += 1
