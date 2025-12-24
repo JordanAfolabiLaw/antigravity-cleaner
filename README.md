@@ -29,10 +29,16 @@
 - **🌐 Google Connectivity Checker:** Professional diagnostic tool for Google Accounts, Gemini AI, and AI Studio connectivity.
 - **🔧 Network Optimizer:** One-click DNS flush, network reset, and connection diagnostics.
 
-### 🚀 Getting Started
-1. **Download:** Head to [Releases](https://github.com/tawroot/antigravity-cleaner/releases) and grab the binary for your OS.
-2. **Run:** No installation required. Standard Portable deployment.
-3. **Clean:** Click `Quick Clean` to optimize your system in seconds.
+### 🚀 Quick Install (macOS/Linux)
+Open your terminal and run:
+```bash
+curl -sSL https://raw.githubusercontent.com/tawroot/antigravity-cleaner/main/install.sh | bash
+```
+
+### 📋 Prerequisites
+- **Windows:** 10/11 (Architecture: x64)
+- **macOS:** Catalina 10.15 or newer
+- **Linux:** Any modern distribution with Python 3.10+
 
 ---
 

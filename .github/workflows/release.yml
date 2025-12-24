@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release Pro (Zipped Portable)
 
 on:
   push:
@@ -19,13 +19,13 @@ jobs:
         include:
           - os: windows-latest
             artifact_name: AntigravityCleaner-Windows.exe
-            asset_name: AntigravityCleaner-Windows
+            zip_name: AntigravityCleaner-Pro-Windows.zip
           - os: macos-latest
             artifact_name: AntigravityCleaner-macOS
-            asset_name: AntigravityCleaner-macOS
+            zip_name: AntigravityCleaner-Pro-macOS.zip
           - os: ubuntu-latest
             artifact_name: AntigravityCleaner-Linux
-            asset_name: AntigravityCleaner-Linux
+            zip_name: AntigravityCleaner-Pro-Linux.tar.gz
 
     steps:
       - name: Checkout code
@@ -35,75 +35,83 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install customtkinter psutil pycryptodome rich pillow pyinstaller
 
-      - name: Build with PyInstaller (Windows)
+      - name: Build (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          pyinstaller --onefile --windowed --name "AntigravityCleaner" --add-data "src;src" --hidden-import=customtkinter --hidden-import=PIL --hidden-import=PIL._tkinter_finder src/gui_apple.py
-          mv dist/AntigravityCleaner.exe dist/${{ matrix.artifact_name }}
+          python -m PyInstaller --onefile --windowed --name "AntigravityCleaner" --add-data "src;src" --hidden-import=customtkinter --hidden-import=PIL --hidden-import=PIL._tkinter_finder src/gui_apple.py
+          mkdir portal-pkg
+          cp dist/AntigravityCleaner.exe portal-pkg/
+          cp README.md portal-pkg/
+          cp LICENSE portal-pkg/
+          7z a -tzip ${{ matrix.zip_name }} ./portal-pkg/*
 
-      - name: Build with PyInstaller (macOS)
+      - name: Build (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          pyinstaller --onefile --windowed --name "AntigravityCleaner" --add-data "src:src" --hidden-import=customtkinter --hidden-import=PIL --hidden-import=PIL._tkinter_finder src/gui_apple.py
-          mv dist/AntigravityCleaner dist/${{ matrix.artifact_name }}
+          python -m PyInstaller --onefile --windowed --name "AntigravityCleaner" --add-data "src:src" --hidden-import=customtkinter --hidden-import=PIL --hidden-import=PIL._tkinter_finder src/gui_apple.py
+          mkdir portal-pkg
+          cp dist/AntigravityCleaner portal-pkg/
+          cp README.md portal-pkg/
+          cp LICENSE portal-pkg/
+          zip -r ${{ matrix.zip_name }} portal-pkg/
 
-      - name: Build with PyInstaller (Linux)
+      - name: Build (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pyinstaller --onefile --name "AntigravityCleaner" --add-data "src:src" --hidden-import=customtkinter --hidden-import=PIL --hidden-import=PIL._tkinter_finder src/gui_apple.py
-          mv dist/AntigravityCleaner dist/${{ matrix.artifact_name }}
+          python -m PyInstaller --onefile --name "AntigravityCleaner" --add-data "src:src" --hidden-import=customtkinter --hidden-import=PIL --hidden-import=PIL._tkinter_finder src/gui_apple.py
+          mkdir portal-pkg
+          cp dist/AntigravityCleaner portal-pkg/
+          cp README.md portal-pkg/
+          cp LICENSE portal-pkg/
+          tar -czf ${{ matrix.zip_name }} portal-pkg/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.asset_name }}
-          path: dist/${{ matrix.artifact_name }}
+          name: ${{ matrix.os }}-build
+          path: ${{ matrix.zip_name }}
 
   release:
-    name: Create Release
+    name: Create Official Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download Artifacts
+      - name: Download all builds
         uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
 
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            AntigravityCleaner-Windows/AntigravityCleaner-Windows.exe
-            AntigravityCleaner-macOS/AntigravityCleaner-macOS
-            AntigravityCleaner-Linux/AntigravityCleaner-Linux
-          name: Release ${{ github.ref_name }}
+          files: release-assets/*
+          name: Antigravity Cleaner Pro ${{ github.ref_name }}
           tag_name: ${{ github.ref }}
-          draft: false
-          prerelease: false
           body: |
-            ## 🚀 Antigravity Cleaner Pro - Release ${{ github.ref_name }}
+            ## 💎 Antigravity Cleaner Pro - Official Portable Release
             
-            Professional system optimization and browser session management tool.
+            This is the **Standard Portable** version. No installation required.
             
-            ### 📦 Artifacts
-            - **Windows**: Portable EXE
-            - **macOS**: Universal Binary
-            - **Linux**: Standard Binary
+            ### 📥 Installation:
+            1. Download the ZIP file for your OS.
+            2. Extract ALL files to a folder.
+            3. Run `AntigravityCleaner`.
             
-            ### ✨ Features
-            - Dashboard with System Health Score
-            - Multi-Browser Support (8+ Browsers)
-            - Secure Session Backup/Restore
-            - Google Services Connectivity Test
-            - Network Optimizer & Diagnostics
+            ### ✨ Features:
+            - Fully Portable (saves data in local `data` folder).
+            - Apple-Style Premium UI.
+            - Supports 8+ Browsers.
+            - Built-in Google Connectivity Diagnostics.
             
             ---
             **Powered by TAWANA NETWORK**
-            (c) 2024-2025 Tawana Mohammadi. All Rights Reserved.
+            (c) 2024-2025 Tawana Mohammadi.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -140,20 +140,30 @@ TRANSLATIONS = {
 
 def get_base_path():
     """Get the base path for data storage (Portable friendly)"""
-    if getattr(sys, 'frozen', False):
-        # Running as EXE
-        base = os.path.dirname(sys.executable)
-    else:
-        # Running as Script
-        base = os.path.dirname(os.path.abspath(__file__))
-    
-    # Check if we should use local 'data' folder (Portable standard)
-    local_data = os.path.join(base, 'data')
-    if os.path.exists(local_data) or getattr(sys, 'frozen', False):
+    try:
+        if getattr(sys, 'frozen', False):
+            # Running as EXE
+            base = os.path.dirname(sys.executable)
+        else:
+            # Running as Script
+            base = os.path.dirname(os.path.abspath(__file__))
+        
+        # Check if we should use local 'data' folder (Portable standard)
+        local_data = os.path.join(base, 'data')
+        
+        # Ensure 'data' folder exists for portable mode
+        if not os.path.exists(local_data):
+            try:
+                os.makedirs(local_data, exist_ok=True)
+            except:
+                # If cannot create 'data' in app folder (e.g. Program Files), fallback to user home
+                return os.path.join(os.path.expanduser('~'), '.antigravity-cleaner')
+        
         return local_data
-    
-    # Fallback to User Profile
-    return os.path.join(os.path.expanduser('~'), '.antigravity-cleaner')
+    except Exception as e:
+        # Emergency fallback
+        return os.path.join(os.path.expanduser('~'), '.antigravity-cleaner')
+
 
 def setup_logger():
     data_dir = get_base_path()
@@ -574,9 +584,9 @@ Violation of these terms will result in legal action.
     def create_dashboard_page(self):
         """Dashboard with health score and system status"""
         self.page_dashboard = ctk.CTkFrame(self.content, fg_color="transparent")
-        self.page_dashboard.grid_columnconfigure(0, weight=1)
-        self.page_dashboard.grid_columnconfigure(1, weight=1)
-        self.page_dashboard.grid_rowconfigure(1, weight=1)
+        self.page_dashboard.grid_columnconfigure((0, 1), weight=1)
+        self.page_dashboard.grid_rowconfigure(2, weight=1) # Allow bottom content to expand
+
         
         # Header
         header = ctk.CTkLabel(
@@ -597,14 +607,14 @@ Violation of these terms will result in legal action.
             font=ctk.CTkFont(size=16, weight="bold"),
             text_color=AppleColors.LABEL
         )
-        health_title.pack(pady=(20, 15), padx=20, anchor="w")
+        health_title.pack(pady=(15, 5), padx=20, anchor="w")
         
         # Health score display
         self.health_score_label = ctk.CTkLabel(
             health_card,
             text="--",
-            font=ctk.CTkFont(size=72, weight="bold"),
-            text_color=AppleColors.GREEN
+            font=ctk.CTkFont(size=48, weight="bold"),
+            text_color=AppleColors.BLUE
         )
         self.health_score_label.pack(pady=10)
         
