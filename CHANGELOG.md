@@ -1,104 +1,67 @@
-# Changelog
+# 📜 Changelog - Antigravity Cleaner Pro
 
-All notable changes to the "Antigravity Cleaner" project will be documented in this file.
-
-## [2.1.1] - 2024-12-23
-
-### Added - Global Expansion 🌍
-- **Multi-Language Documentation**: Full documentation now available in 8 languages
-  - English, Persian/Farsi, Chinese (Simplified), Russian, Turkish, Spanish, Arabic, Urdu
-  - Language-specific guides for regional troubleshooting
-  - Comprehensive keyword coverage for global SEO
-  
-- **Global Problem Statement**: Expanded README to address worldwide use cases
-  - Clearly defines problems solved across restricted networks globally
-  - Lists applicable regions (sanctioned countries, filtered networks, corporate environments)
-  - Positions tool as globally applicable while keeping Iran as origin story
-  
-- **Enhanced SEO & Keywords**: 
-  - Multi-language keyword sections (8 languages)
-  - Comprehensive search term coverage for international discoverability
-  - LLM-friendly structuring for AI model citations
-  
-- **GitHub Topics Recommendations**: 
-  - Suggested 25+ topics for maximum repository discoverability
-  - Categories: Network, Regional Access, Browser/Session, Technical
-  
-- **Email-Based Profile Search**: Search browser profiles by email address
-  - Useful for users with 50+ browser profiles
-  - Supports partial email matching
-  - Works with Chrome, Edge, and Brave
-
-### Changed
-- README structure enhanced with global positioning
-- SEO section expanded from 2 languages to 8 languages
-- Documentation now emphasizes universal applicability
-
-### Documentation
-- Added Wiki links for all 8 supported languages
-- Added comprehensive search keyword lists
-- Added regional use-case examples
+All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.1.0] - 2025-12-10
+## [4.0.0] - 2024-12-25
 
-### Added
-- **Browser Login Helper**: Safe, selective cleaning of Antigravity browser traces
-  - Supports Chrome, Edge, Brave, and Firefox
-  - Scans all browser profiles
-  - Removes only Antigravity-related cookies, cache, and localStorage
-  - Automatic backups before deletion
-  - Graceful browser process management
-  
-- **Session Manager**: Backup and restore browser sessions
-  - AES-256-GCM encryption for secure storage
-  - Avoid repeated logins
-  - Session validation and expiration (30 days)
-  - Manage multiple saved sessions
-  
-- **Network Optimizer**: Comprehensive network diagnostics
-  - Test connectivity to Google services
-  - DNS resolution diagnostics
-  - Proxy/VPN conflict detection
-  - SSL certificate verification
-  - Detailed diagnostic reports
-  - Network stack reset (Windows)
+### 🎉 Major Release - Complete Redesign
 
-### Changed
-- Updated menu system with new options (6: Browser Login Helper, 7: Session Manager)
-- Enhanced logging with detailed agent operation logs in `.agent/logs/`
-- Updated dependencies (added `requests`, `pycryptodome`)
-- Updated `.gitignore` to allow agent logs
+#### ✨ New Features
+- **Premium Apple-Style UI** - Complete redesign with macOS-inspired aesthetics
+  - Glassmorphism effects and smooth animations
+  - Responsive grid layouts that adapt to window size
+  - SF Pro-inspired typography
+  - Dark/Light mode support
 
-### Security
-- Session data encrypted at rest using AES-256-GCM
-- Master key stored with restrictive permissions
-- No sensitive data in user-facing logs
-- Automatic backups before any browser data deletion
+- **Google Services Diagnostics** - Real-time connectivity testing
+  - Test Google Account, Gemini, Cloud, AI Studio
+  - Latency measurements and status indicators
+  - Dedicated popup window with detailed results
 
----
+- **Enhanced Network Tools**
+  - Integrated "Test Google" button in Network page
+  - DNS flush capabilities
+  - Network diagnostics and reporting
+  - Windows network stack reset
 
-## [2.0.0] - 2025-12-09
-### Added
-- **Cross-Platform Core**: Replaced PowerShell-only core with a robust Python engine (`src/main.py`).
-- **New UI**: Implemented `rich` library for a beautiful, colorful CLI experience.
-- **Process Management**: Added `psutil` integration to auto-detect and kill stuck Antigravity processes.
-- **One-Liner Installers**: Added `install.ps1` (Windows) and `install.sh` (Linux/Mac) for instant deployment.
-- **Launchers**: Added `run_windows.bat` and `run_mac_linux.sh` for easy double-click execution.
-- **Bilingual Documentation**: Updated README with full English and Persian (Farsi) guides.
+- **Tawana Network Branding**
+  - Professional branding throughout the application
+  - Version display in header
+  - License information easily accessible
 
-### Changed
-- **Directory Structure**: Moved legacy scripts to `legacy/` folder.
-- **Logic**: Improved cleanup logic to be safer and more comprehensive (Deep Scan).
+#### 🔧 Improvements
+- **True Portable Mode** - Data folder created next to executable
+- **Bilingual Interface** - Full English and Persian (فارسی) support
+- **Encrypted Session Backups** - AES-256-GCM encryption for browser sessions
+- **Multi-browser Support** - 8+ browsers including Chrome, Edge, Brave, Firefox, Opera, Vivaldi, Arc, Safari
+- **Responsive Dashboard** - Health score, system status, and quick actions
 
-### Removed
-- **Dependency on PowerShell**: Core logic no longer relies solely on PowerShell, allowing Mac/Linux support.
+#### 🐛 Bug Fixes
+- Fixed UI collapse issues when resizing window
+- Resolved missing color attributes in AppleColors class
+- Fixed portable path detection and data folder creation
+- Corrected startup crashes on restricted systems
+
+#### 📦 Build & Release
+- Automated multi-platform builds (Windows, macOS, Linux)
+- Standard ZIP/TAR packaging with README, LICENSE, and data folder
+- GitHub Actions workflow using GitHub CLI for reliability
+- Proper version information embedded in Windows executable
 
 ---
 
-## [1.0.0] - 2024-05-20
+## [2.1.0] - 2024-12-15
+
 ### Initial Release
-- Basic PowerShell script for Windows.
-- Registry cleaning.
-- Temp file removal.
+- Basic GUI with cleaning functionality
+- Windows Registry scanning
+- Process detection and termination
+- Network reset capabilities
+- Multi-language support (EN/FA)
+
+---
+
+**Powered by TAWANA NETWORK**  
+(c) 2024-2025 Tawana Mohammadi. All Rights Reserved.

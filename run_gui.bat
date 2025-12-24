@@ -7,8 +7,9 @@ title Antigravity Cleaner GUI
 
 echo.
 echo ========================================
-echo   Antigravity Cleaner v2.1 - GUI
+echo   Antigravity Cleaner Pro v4.0
 echo ========================================
+
 echo.
 
 REM Check if Python is installed
@@ -31,7 +32,7 @@ echo.
 
 REM Run the GUI
 cd /d "%~dp0"
-python src\gui_cleaner.py
+python src\gui_apple.py
 
 if %errorlevel% neq 0 (
     echo.

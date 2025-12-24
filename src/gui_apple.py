@@ -64,19 +64,14 @@ class AppleColors:
     GREEN = "#34C759"
     RED = "#FF3B30"
     ORANGE = "#FF9500"
+    YELLOW = "#FFCC00"
+    PURPLE = "#AF52DE"
+    PINK = "#FF2D55"
+    TEAL = "#5AC8FA"
     
     # Text
     LABEL = "#1D1D1F"
     SECONDARY_LABEL = "#86868B"
-    
-    # Borders
-    SEPARATOR = "#D2D2D7"
-    BORDER = "rgba(0,0,0,0.1)"
-
-    
-    # Grays (Light mode)
-    LABEL = "#000000"
-    SECONDARY_LABEL = "#3C3C43"
     TERTIARY_LABEL = "#3C3C4399"
     
     # Backgrounds
@@ -89,8 +84,9 @@ class AppleColors:
     SIDEBAR_ACTIVE = "#007AFF"
     SIDEBAR_HOVER = "#E8E8ED"
     
-    # Separators
+    # Borders & Separators
     SEPARATOR = "#C6C6C8"
+    BORDER = "rgba(0,0,0,0.1)"
     
     # Dark mode
     DARK_BG = "#1C1C1E"
@@ -121,6 +117,7 @@ TRANSLATIONS = {
         'reset': 'Reset',
         'dark_mode': 'Dark Mode',
         'ready': 'Ready',
+        'test_google': 'Test Google',
     },
     'fa': {
         'title': 'آنتی‌گرویتی کلینر',
@@ -141,6 +138,7 @@ TRANSLATIONS = {
         'reset': 'ریست',
         'dark_mode': 'حالت تاریک',
         'ready': 'آماده',
+        'test_google': 'تست گوگل',
     }
 }
 
@@ -201,7 +199,7 @@ class AntigravityApp(ctk.CTk):
     Antigravity Cleaner with Apple-style design
     """
     
-    VERSION = "3.1"
+    VERSION = "4.0.0"
     GITHUB_URL = "https://github.com/tawroot/antigravity-cleaner"
     
     def __init__(self):
@@ -1137,6 +1135,12 @@ Violation of these terms will result in legal action.
             command=self.flush_dns
         )
         dns_btn.pack(side="left", padx=5)
+        
+        google_btn = self.create_button(
+            btn_frame, self.t('test_google'), "blue",
+            command=self.test_google_services
+        )
+        google_btn.pack(side="left", padx=5)
         
         diag_btn = self.create_button(
             btn_frame, self.t('diagnostics'), "blue",
