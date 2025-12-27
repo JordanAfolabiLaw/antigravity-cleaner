@@ -4,16 +4,14 @@
 
 <img src="https://raw.githubusercontent.com/tawroot/antigravity-cleaner/main/icon.png" width="128" alt="Antigravity Cleaner Logo">
 
-### **Professional System Optimization & Browser Session Management**
+### **Professional System Optimization & Browser Session Management - Documentation & Website**
 
-[![GitHub Release](https://img.shields.io/github/v/release/tawroot/antigravity-cleaner?style=for-the-badge&color=007AFF)](https://github.com/tawroot/antigravity-cleaner/releases)
-[![Downloads](https://img.shields.io/github/downloads/tawroot/antigravity-cleaner/total?style=for-the-badge&color=34C759)](https://github.com/tawroot/antigravity-cleaner/releases)
+[![Website Status](https://img.shields.io/website?url=https%3A%2F%2Ftawroot.github.io%2Fantigravity-cleaner%2F&style=for-the-badge&label=Website)](https://tawroot.github.io/antigravity-cleaner/)
 [![Stars](https://img.shields.io/github/stars/tawroot/antigravity-cleaner?style=for-the-badge&color=FFCC00)](https://github.com/tawroot/antigravity-cleaner/stargazers)
-[![Platforms](https://img.shields.io/badge/Platforms-Windows%20%7C%20macOS%20%7C%20Linux-8B5CF6?style=for-the-badge)](https://github.com/tawroot/antigravity-cleaner/releases)
 
 ---
 
-### ⭐ **Love this tool? Give us a Star!** ⭐
+### ⭐ **Love this project? Give us a Star!** ⭐
 
 [![Star on GitHub](https://img.shields.io/badge/⭐_Star_on_GitHub-Support_the_Project-FFCC00?style=for-the-badge&logo=github&logoColor=black)](https://github.com/tawroot/antigravity-cleaner)
 
@@ -24,6 +22,14 @@
 [![Telegram](https://img.shields.io/badge/Telegram-Join_Channel-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/panbehnet)
 
 </div>
+
+---
+
+## 🌐 Official Website
+
+This repository now hosts the official website and documentation for **Antigravity Cleaner**.
+
+👉 **Visit the Website:** [tawroot.github.io/antigravity-cleaner](https://tawroot.github.io/antigravity-cleaner/)
 
 ---
 
@@ -42,77 +48,15 @@
 
 ---
 
-## 🎯 What is Antigravity Cleaner?
+## 📖 About Antigravity Cleaner
 
-**Antigravity Cleaner Pro** is a high-performance, cross-platform utility designed to:
+**Antigravity Cleaner Pro** was a tool designed to clean system junk, manage browser sessions, and optimize network settings. This project has evolved, and this repository currently serves as the central hub for documentation, community resources, and the project website.
 
-- 🧹 **Clean System Junk** - Remove Antigravity IDE traces, temporary files, and caches
-- 💾 **Manage Browser Sessions** - Encrypted backup & restore for 8+ browsers
-- 🌐 **Test Google Connectivity** - Diagnose access issues to Google services
-- 🔧 **Optimize Network** - One-click DNS flush and network reset
-
-> **Perfect for users in restricted regions** who experience login errors, 403 forbidden, or region lock issues with Antigravity IDE and Google services.
-
----
-
-## ✨ Key Features
-
-| Feature | Description |
-|---------|-------------|
-| 📊 **Dashboard** | Real-time system health score |
-| 🧹 **Precision Cleaning** | Deep-clean system junk and application caches |
-| 💾 **Session Safeguard** | Encrypted backup for Chrome, Edge, Firefox, Safari, Arc, Vivaldi, Opera, Brave |
-| 🌐 **Google Connectivity Checker** | Test access to Google Account, Gemini AI, Cloud, AI Studio |
-| 🔧 **Network Optimizer** | DNS flush, network reset, diagnostics |
-| 🌙 **Dark Mode** | Beautiful Apple-inspired UI |
-| 🌍 **Bilingual** | English & Persian support |
-
----
-
-## 🚀 Quick Start
-
-### Windows
-Download the portable EXE from [Releases](https://github.com/tawroot/antigravity-cleaner/releases) - No installation required!
-
-### macOS / Linux
-```bash
-curl -sSL https://raw.githubusercontent.com/tawroot/antigravity-cleaner/main/install.sh | bash
-```
-
-### PowerShell (Windows)
-```powershell
-iwr -useb https://raw.githubusercontent.com/tawroot/antigravity-cleaner/main/install.ps1 | iex
-```
-
----
-
-## 📋 System Requirements
-
-| Platform | Requirements |
-|----------|-------------|
-| **Windows** | Windows 10/11 (x64) |
-| **macOS** | Catalina 10.15+ |
-| **Linux** | Any modern distro with Python 3.10+ |
-
----
-
-## 🔧 Common Issues Solved
-
-This tool helps fix:
-
-- ❌ `403 Forbidden` errors in Antigravity IDE
-- ❌ `Region Lock` and access denied issues
-- ❌ Google login loop / "Setting up account" stuck
-- ❌ Gemini Code Assist conflicts
-- ❌ Network connectivity problems
-
----
-
-## 📖 Documentation
-
-- 📚 [Wiki](https://github.com/tawroot/antigravity-cleaner/wiki)
-- 🌐 [Website](https://tawroot.github.io/antigravity-cleaner/)
-- 🐛 [Report Issues](https://github.com/tawroot/antigravity-cleaner/issues)
+### ✨ Key Features Documented
+- 🧹 **System Cleaning Techniques**
+- 💾 **Browser Session Management Guides**
+- 🌐 **Google Services Connectivity Solutions**
+- 🔧 **Network Optimization Strategies**
 
 ---
 
@@ -149,12 +93,11 @@ This tool helps fix:
 
 ## 🤝 Support the Project
 
-If you find this tool helpful:
+If you find our resources helpful:
 
-1. ⭐ **Star this repository** - It helps others discover the tool
+1. ⭐ **Star this repository**
 2. 📢 **Join our Telegram** - [t.me/panbehnet](https://t.me/panbehnet)
-3. 🐛 **Report bugs** - Help us improve
-4. 📣 **Share with others** - Spread the word
+3. 📣 **Share with others**
 
 ---
 
@@ -165,8 +108,8 @@ If you find this tool helpful:
 
 | ✅ Allowed | ❌ Prohibited |
 |-----------|--------------|
-| Free personal use | Copying source code |
-| Report issues on GitHub | Modifying or forking |
+| Viewing documentation | Copying website source |
+| Linking to website | Modifying or forking |
 | | Rebranding or renaming |
 
 **Violation of these terms will result in legal action.**
