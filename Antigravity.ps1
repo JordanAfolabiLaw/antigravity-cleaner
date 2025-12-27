@@ -132,100 +132,160 @@ function Get-Browsers {
     }
 }
 
-function Get-BrowserAccounts {
-    param($UserDataPath)
-    $accounts = @()
+# --- Helper for Profile Detection ---
+function Get-BrowserProfiles {
+    param($BrowserName, $UserDataPath)
+    $profiles = @()
     
-    if (!(Test-Path $UserDataPath)) { return $accounts }
+    if (!(Test-Path $UserDataPath)) { return $profiles }
 
-    $profileDirs = Get-ChildItem -Path $UserDataPath -Directory | Where-Object { $_.Name -eq "Default" -or $_.Name -like "Profile *" }
+    # Standard "Default" and "Profile X" folders
+    $dirs = Get-ChildItem -Path $UserDataPath -Directory | Where-Object { $_.Name -eq "Default" -or $_.Name -like "Profile *" }
     
-    foreach ($dir in $profileDirs) {
+    foreach ($dir in $dirs) {
+        $email = "No Login"
         $prefPath = Join-Path $dir.FullName "Preferences"
+        
         if (Test-Path $prefPath) {
             try {
-                # Read JSON with error suppression for locked files
                 $content = Get-Content -Path $prefPath -Raw -ErrorAction SilentlyContinue
                 if ($content) {
                     $json = $content | ConvertFrom-Json
-                    
-                    $email = $null
-                    # Try detection method 1 (Modern Chrome/Edge)
                     if ($json.account_info -and $json.account_info.Count -gt 0) {
                         $email = $json.account_info[0].email
-                    }
-                    # Method 2 (Legacy)
-                    if ([string]::IsNullOrWhiteSpace($email) -and $json.google -and $json.google.services) {
+                    } elseif ($json.google -and $json.google.services -and $json.google.services.username) {
                         $email = $json.google.services.username
-                    }
-
-                    if (-not [string]::IsNullOrWhiteSpace($email)) {
-                        $accounts += $email
                     }
                 }
             } catch {}
         }
+        
+        $profiles += [PSCustomObject]@{
+            Browser = $BrowserName
+            Name    = $dir.Name
+            Path    = $dir.FullName
+            Email   = $email
+        }
     }
-    return $accounts | Select-Object -Unique
+    return $profiles
 }
 
+# --- Region Inspector Module ---
+function Invoke-RegionInspector {
+    Show-Header
+    Show-Info "Google Region Inspector"
+    Write-Host "  Use this tool to check or change your Google account region."
+    Write-Host "  [IMPORTANT] Make sure your VPN is ON (US or EU IP) before proceeding." -ForegroundColor Yellow
+    Write-Host "  [NOTE] After requesting a change, wait 30-60 mins for the email." -ForegroundColor DarkGray
+    Write-Host ""
+    
+    $browsers = Get-Browsers
+    $allProfiles = @()
+    $i = 1
+    
+    foreach ($bKey in $browsers.Keys) {
+        $profs = Get-BrowserProfiles -BrowserName $bKey -UserDataPath $browsers[$bKey]
+        foreach ($p in $profs) {
+            Write-Host "  [$i] $($p.Browser) - $($p.Email)" -NoNewline
+            Write-Host " ($($p.Name))" -ForegroundColor DarkGray
+            $allProfiles += $p
+            $i++
+        }
+    }
+    
+    if ($allProfiles.Count -eq 0) {
+        Show-Warning "No supported browser profiles found."
+        Wait-Key
+        return
+    }
+    
+    Write-Host "  [0] Back"
+    $sel = Read-Host "  > Select Profile to Inspect"
+    if ($sel -eq "0") { return }
+    
+    if ($sel -match "^\d+$" -and [int]$sel -le $allProfiles.Count -and [int]$sel -gt 0) {
+        $target = $allProfiles[[int]$sel - 1]
+        
+        Show-Info "Opening Region Settings for: $($target.Email)"
+        
+        # Launch URL with specific profile
+        $url = "https://policies.google.com/country-association-form"
+        $cmd = ""
+        $args = ""
+        
+        switch -Wildcard ($target.Browser) {
+            "*Chrome*" { $cmd = "chrome"; $args = "--profile-directory=`"$($target.Name)`" `"$url`"" }
+            "*Edge*"   { $cmd = "msedge"; $args = "--profile-directory=`"$($target.Name)`" `"$url`"" }
+            "*Brave*"  { $cmd = "brave";  $args = "--profile-directory=`"$($target.Name)`" `"$url`"" }
+            "*Opera*"  { $cmd = "launcher"; $args = "`"$url`"" } # Opera handles profiles differently
+        }
+        
+        try {
+            Start-Process $cmd -ArgumentList $args
+            Show-Success "Browser opened. Check the page for 'Country Association'."
+        } catch {
+            Show-Error "Could not launch browser automatically. Please open manually:"
+            Write-Host "  $url" -ForegroundColor White
+        }
+    }
+    Wait-Key
+}
+
+# --- Enhanced Session Manager ---
 function Invoke-BackupSession {
     Show-Header
     Show-Info "Backup Browser Sessions"
     
     $browsers = Get-Browsers
-    $available = @()
+    $allProfiles = @()
     $i = 1
     
-    foreach ($key in $browsers.Keys) {
-        if (Test-Path $browsers[$key]) {
-            $emails = Get-BrowserAccounts -UserDataPath $browsers[$key]
-            $emailStr = if ($emails) { " [Accounts: $($emails -join ', ')]" } else { "" }
-            
-            Write-Host "  [$i] $key" -NoNewline
-            if ($emailStr) { Write-Host $emailStr -ForegroundColor DarkGray } else { Write-Host "" }
-            
-            $available += $key
+    foreach ($bKey in $browsers.Keys) {
+        $profs = Get-BrowserProfiles -BrowserName $bKey -UserDataPath $browsers[$bKey]
+        foreach ($p in $profs) {
+            Write-Host "  [$i] $($p.Browser) - $($p.Email)" -NoNewline
+            Write-Host " ($($p.Name))" -ForegroundColor DarkGray
+            $allProfiles += $p
             $i++
         }
     }
     
-    if ($available.Count -eq 0) {
-        Show-Warning "No supported browsers found."
+    if ($allProfiles.Count -eq 0) {
+        Show-Warning "No profiles found."
         Wait-Key
         return
     }
     
-    Write-Host "  [A] All Browsers"
     Write-Host "  [0] Back"
-    
-    $sel = Read-Host "  > Select Browser to Backup"
+    $sel = Read-Host "  > Select Profile to Backup"
     if ($sel -eq "0") { return }
     
-    $toBackup = @()
-    if ($sel -eq "A" -or $sel -eq "a") {
-        $toBackup = $available
-    } elseif ($sel -match "^\d+$" -and [int]$sel -le $available.Count -and [int]$sel -gt 0) {
-        $toBackup = @($available[[int]$sel - 1])
-    } else {
-        Show-Error "Invalid Selection"
-        Wait-Key
-        return
-    }
-    
-    $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-    
-    foreach ($bName in $toBackup) {
-        $src = $browsers[$bName]
-        $dest = Join-Path $SessionDataPath "$bName\$timestamp"
+    if ($sel -match "^\d+$" -and [int]$sel -le $allProfiles.Count -and [int]$sel -gt 0) {
+        $p = $allProfiles[[int]$sel - 1]
         
-        Show-Info "Backing up $bName..."
+        $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+        # Sanitize email for folder name
+        $safeEmail = $p.Email -replace "[^a-zA-Z0-9@-]", "_"
+        $dest = Join-Path $SessionDataPath "$($p.Browser)\$safeEmail\_$timestamp"
+        
+        Show-Info "Backing up $($p.Browser) ($($p.Email))..."
         try {
             if (!(Test-Path $dest)) { New-Item -ItemType Directory -Path $dest -Force > $null }
-            Copy-Item -Path "$src\*" -Destination $dest -Recurse -Force -ErrorAction Stop
-            Show-Success "Backup Complete: $dest"
+            Copy-Item -Path "$($p.Path)\*" -Destination $dest -Recurse -Force -ErrorAction Stop
+            
+            # Save metadata
+            $meta = @{
+                Browser = $p.Browser
+                ProfileName = $p.Name
+                Email = $p.Email
+                Date = $timestamp
+            } | ConvertTo-Json
+            $meta | Out-File (Join-Path $dest "meta.json")
+            
+            Show-Success "Backup Saved to:"
+            Write-Host "  $dest" -ForegroundColor White
         } catch {
-            Show-Error "Failed to backup $bName`n  $_"
+            Show-Error "Backup Failed: $_"
         }
     }
     Wait-Key
@@ -235,62 +295,61 @@ function Invoke-RestoreSession {
     Show-Header
     Show-Info "Restore Browser Sessions"
     
-    $browsers = Get-Browsers
-    # List backups in SessionDataPath
-    $backups = Get-ChildItem -Path $SessionDataPath -Directory
+    # List all backups recursively
+    $backups = Get-ChildItem -Path $SessionDataPath -Recurse -File -Filter "meta.json"
     
     if ($backups.Count -eq 0) {
-        Show-Warning "No backups found in $SessionDataPath"
+        Show-Warning "No backups found."
         Wait-Key
         return
     }
     
     $i = 1
-    foreach ($b in $backups) {
-        Write-Host "  [$i] $($b.Name)"
+    $restoreList = @()
+    
+    foreach ($metaFile in $backups) {
+        $json = Get-Content $metaFile.FullName | ConvertFrom-Json
+        $folder = $metaFile.Directory.FullName
+        
+        Write-Host "  [$i] $($json.Browser)" -NoNewline
+        Write-Host " - $($json.Email)" -ForegroundColor Cyan -NoNewline
+        Write-Host " ($($json.Date))" -ForegroundColor DarkGray
+        
+        $restoreList += [PSCustomObject]@{
+            Header = $json
+            Path = $folder
+        }
         $i++
     }
     Write-Host "  [0] Back"
     
-    $sel = Read-Host "  > Select Browser Type"
+    $sel = Read-Host "  > Select Backup to Restore"
     if ($sel -eq "0") { return }
     
-    if ($sel -match "^\d+$" -and [int]$sel -le $backups.Count -and [int]$sel -gt 0) {
-        $browserName = $backups[[int]$sel - 1].Name
-        $browserPath = $browsers[$browserName]
+    if ($sel -match "^\d+$" -and [int]$sel -le $restoreList.Count -and [int]$sel -gt 0) {
+        $target = $restoreList[[int]$sel - 1]
         
-        # List Timestamps
-        $timestamps = Get-ChildItem -Path (Join-Path $SessionDataPath $browserName) -Directory
-        $j = 1
-        Show-Info "Available Backups for $($browserName):"
-        foreach ($ts in $timestamps) {
-            # Scan backup for emails
-            $emails = Get-BrowserAccounts -UserDataPath $ts.FullName
-            $emailStr = if ($emails) { " [Accounts: $($emails -join ', ')]" } else { " [No Login Detected]" }
-
-            Write-Host "    [$j] $($ts.Name)" -NoNewline
-            Write-Host $emailStr -ForegroundColor DarkGray
-            $j++
-        }
+        # Determine current path
+        $browsers = Get-Browsers
+        $browserRoot = $browsers[$target.Header.Browser]
+        $destPath = Join-Path $browserRoot $target.Header.ProfileName
         
-        $tsSel = Read-Host "    > Select Backup to Restore"
-        if ($tsSel -match "^\d+$" -and [int]$tsSel -le $timestamps.Count -and [int]$tsSel -gt 0) {
-            $restoreSrc = $timestamps[[int]$tsSel - 1].FullName
-            
-            Show-Warning "Restoring will OVERWRITE current $browserName profile."
-            $confirm = Read-Host "    > Are you sure? (Y/N)"
-            if ($confirm -eq "Y") {
-                Show-Info "Restoring from $restoreSrc..."
-                try {
-                    # Kill browser process first
-                    $procName = switch -Wildcard ($browserName) { "*Chrome*" {"chrome"} "*Edge*" {"msedge"} "*Brave*" {"brave"} "*Opera*" {"opera"} }
-                    Stop-Process -Name $procName -Force -ErrorAction SilentlyContinue
-                    
-                    Copy-Item -Path "$restoreSrc\*" -Destination $browserPath -Recurse -Force -ErrorAction Stop
-                    Show-Success "Restore Successful!"
-                } catch {
-                    Show-Error "Restore Failed: $_"
-                }
+        Show-Warning "Restoring will OVERWRITE the current: $($target.Header.Browser) > $($target.Header.ProfileName)"
+        Show-Info "This will allow you to login to Antigravity without a password!"
+        
+        $confirm = Read-Host "  > Are you sure? (Y/N)"
+        if ($confirm -eq "Y") {
+            try {
+                # Stop browser
+                $procName = switch -Wildcard ($target.Header.Browser) { "*Chrome*" {"chrome"} "*Edge*" {"msedge"} "*Brave*" {"brave"} "*Opera*" {"opera"} }
+                Stop-Process -Name $procName -Force -ErrorAction SilentlyContinue
+                
+                # Restore
+                Copy-Item -Path "$($target.Path)\*" -Destination $destPath -Recurse -Force -ErrorAction Stop
+                Show-Success "Restore Successful!"
+                Show-Info "You can now open Antigravity/Browser."
+            } catch {
+                Show-Error "Restore Failed: $_"
             }
         }
     }
@@ -300,8 +359,8 @@ function Invoke-RestoreSession {
 function Invoke-SessionManager {
     Show-Header
     Show-Info "Session Manager Module"
-    Write-Host "  [1] Backup Browser Sessions"
-    Write-Host "  [2] Restore Browser Sessions"
+    Write-Host "  [1] Backup Individual Profile"
+    Write-Host "  [2] Restore Profile (Login Bypass)"
     Write-Host "  [0] Back"
     
     $choice = Read-Host "  > Select"
@@ -415,6 +474,7 @@ function Main {
         Write-Host "  [2] Session Manager       " -ForegroundColor White -NoNewline; Write-Host "(Backup/Restore Browser Profiles)" -ForegroundColor DarkGray
         Write-Host "  [3] Network Optimizer     " -ForegroundColor White -NoNewline; Write-Host "(Fix Connection & DNS)" -ForegroundColor DarkGray
         Write-Host "  [4] System Analysis       " -ForegroundColor White -NoNewline; Write-Host "(Check Google & Antigravity Services)" -ForegroundColor DarkGray
+        Write-Host "  [5] Region Inspector      " -ForegroundColor White -NoNewline; Write-Host "(Check/Change Account Region)" -ForegroundColor DarkGray
         Write-Host "  [0] Exit"
         Write-Host ""
         
@@ -425,6 +485,7 @@ function Main {
             "2" { Invoke-SessionManager }
             "3" { Invoke-NetworkTools }
             "4" { Test-SystemAnalysis }
+            "5" { Invoke-RegionInspector }
             "0" { Write-Host "Goodbye!"; exit }
             default { Show-Error "Invalid selection" }
         }
