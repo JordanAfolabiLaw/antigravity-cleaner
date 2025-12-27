@@ -181,10 +181,19 @@ function Invoke-RegionInspector {
     Show-Header
     Show-Info "Google Region Inspector"
     Write-Host "  Use this tool to check or change your Google account region."
-    Write-Host "  [IMPORTANT] Make sure your VPN is ON (US or EU IP) before proceeding." -ForegroundColor Yellow
-    Write-Host "  [NOTE] After requesting a change, wait 30-60 mins for the email." -ForegroundColor DarkGray
+    Write-Host "  [IMPORTANT] ACTIONS TO INCREASE SUCCESS RATE:" -ForegroundColor Yellow
+    Write-Host "    1. VPN must be ON (US/EU IP)."
+    Write-Host "    2. Set System Timezone to match VPN location (e.g. EST/PST)."
+    Write-Host "    3. Disable WebRTC in browser if possible."
     Write-Host ""
     
+    $check = Read-Host "  > Launch Pre-Check? (Opens IP/Leak Test) (Y/N)"
+    if ($check -eq "Y") {
+        Start-Process "https://browserleaks.com/ip"
+        Write-Host "  Checking leaks... ensure 'WebRTC Leak' is NOT showing your real IP." -ForegroundColor Cyan
+        Wait-Key
+    }
+
     $browsers = Get-Browsers
     $allProfiles = @()
     $i = 1
