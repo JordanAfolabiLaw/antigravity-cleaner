@@ -414,6 +414,7 @@ function Main {
         Write-Host "  [1] System Cleaner        " -ForegroundColor White -NoNewline; Write-Host "(Clean Junk & Antigravity Traces)" -ForegroundColor DarkGray
         Write-Host "  [2] Session Manager       " -ForegroundColor White -NoNewline; Write-Host "(Backup/Restore Browser Profiles)" -ForegroundColor DarkGray
         Write-Host "  [3] Network Optimizer     " -ForegroundColor White -NoNewline; Write-Host "(Fix Connection & DNS)" -ForegroundColor DarkGray
+        Write-Host "  [4] System Analysis       " -ForegroundColor White -NoNewline; Write-Host "(Check Google & Antigravity Services)" -ForegroundColor DarkGray
         Write-Host "  [0] Exit"
         Write-Host ""
         
@@ -423,6 +424,7 @@ function Main {
             "1" { Menu-Cleaner }
             "2" { Invoke-SessionManager }
             "3" { Invoke-NetworkTools }
+            "4" { Test-SystemAnalysis }
             "0" { Write-Host "Goodbye!"; exit }
             default { Show-Error "Invalid selection" }
         }
