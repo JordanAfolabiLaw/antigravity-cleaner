@@ -10,7 +10,8 @@
 #>
 
 $host.UI.RawUI.WindowTitle = "Antigravity Cleaner Shell v4.1.0"
-$ErrorActionPreference = "SilentlyContinue"
+# Use default error handling globally; SilentlyContinue is applied per-command where appropriate
+$ErrorActionPreference = "Continue"
 
 # --- Configuration & Platform Detection ---
 $AppTitle = "ANTIGRAVITY CLEANER"

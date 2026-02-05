@@ -1,5 +1,5 @@
-$ErrorActionPreference = "SilentlyContinue"
-$GithubBaseUrl = "https://raw.githubusercontent.com/tawroot/antigravity-cleaner/main"
+$ErrorActionPreference = "Stop"
+$GithubBaseUrl = "https://raw.githubusercontent.com/JordanAfolabiLaw/antigravity-cleaner/main"
 
 # Detect OS
 $IsWin = if ($null -ne $IsWindows) { $IsWindows } else { $env:OS -like "*Windows*" }
@@ -23,10 +23,44 @@ try {
 }
 catch {
     Write-Host "Failed to download script. Check internet connection." -ForegroundColor Red
+    Write-Host "Error: $_" -ForegroundColor Red
     exit 1
 }
 
-# 3. Create Desktop Shortcut (Windows Only)
+# 3. Verify Integrity (SHA256 Hash Check)
+Write-Host "Verifying file integrity..." -ForegroundColor Yellow
+try {
+    $checksumFile = Join-Path $InstallDir "checksums.sha256"
+    Invoke-WebRequest -Uri "$GithubBaseUrl/checksums.sha256" -OutFile $checksumFile -UseBasicParsing
+
+    # Parse expected hash from checksums file
+    $checksumContent = Get-Content $checksumFile -Raw
+    $expectedHash = ($checksumContent -split "\s+")[0].Trim().ToUpper()
+
+    # Compute actual hash of downloaded file
+    $actualHash = (Get-FileHash -Path $TargetFile -Algorithm SHA256).Hash.ToUpper()
+
+    if ($actualHash -ne $expectedHash) {
+        Write-Host "" 
+        Write-Host "  !!  INTEGRITY CHECK FAILED  !!" -ForegroundColor Red
+        Write-Host "  The downloaded file does not match the expected checksum." -ForegroundColor Red
+        Write-Host "  Expected: $expectedHash" -ForegroundColor DarkGray
+        Write-Host "  Got:      $actualHash" -ForegroundColor DarkGray
+        Write-Host "  The file may have been tampered with. Aborting installation." -ForegroundColor Red
+        Remove-Item -Path $TargetFile -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $checksumFile -Force -ErrorAction SilentlyContinue
+        exit 1
+    }
+
+    Write-Host "Integrity verified (SHA256 match)." -ForegroundColor Green
+    Remove-Item -Path $checksumFile -Force -ErrorAction SilentlyContinue
+}
+catch {
+    Write-Host "WARNING: Could not verify file integrity. Checksums file not found." -ForegroundColor Yellow
+    Write-Host "Proceeding without verification — consider updating the repo." -ForegroundColor Yellow
+}
+
+# 4. Create Desktop Shortcut (Windows Only)
 if ($IsWin) {
     try {
         $WshShell = New-Object -ComObject WScript.Shell
@@ -51,6 +85,6 @@ else {
     Write-Host ""
 }
 
-# 4. Launch
+# 5. Launch
 Write-Host "Launching Antigravity..." -ForegroundColor Cyan
 Start-Process $PSExe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$TargetFile`""
